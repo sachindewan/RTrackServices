@@ -49,6 +49,8 @@ namespace Catalog.API.Controllers
         }
 
         [HttpGet("{productId}", Name = "GetProduct")]
+        [ProducesResponseType(typeof(Product), (int)HttpStatusCode.OK)]
+        [ProducesDefaultResponseType((typeof(Product)))]
         public async Task<IActionResult> GetProducts(string productId)
         {
             var data = await _repo.GetProduct(productId);

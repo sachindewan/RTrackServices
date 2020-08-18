@@ -34,6 +34,10 @@ namespace Catalog.API
             services.AddControllers();
             services.AddTransient<ICatalogContext, CatalogContext>();
             services.AddTransient<Catalog.API.Repositories.Interfaces.IProductRepository, Catalog.API.Repositories.ProductRepository>();
+            services.AddSwaggerGen(options =>
+            {
+                options.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo() { Title = "Catalog Api", Version = "v1" });
+            });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -43,7 +47,12 @@ namespace Catalog.API
             {
                 app.UseDeveloperExceptionPage();
             }
-
+            app.UseSwagger();
+            app.UseSwaggerUI(options =>
+            {
+                options.SwaggerEndpoint("v1/swagger.json", "Catalog Api v1");
+                //options.RoutePrefix = "";
+            });
             app.UseRouting();
 
             app.UseAuthorization();
