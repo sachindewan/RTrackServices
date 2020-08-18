@@ -8,6 +8,11 @@ services:
             - ${WEBAPP_STORAGE_NAME}/site:/data/db
         ports: 
             - "27017:27017"
+    basketdb:
+        container_name: basketdb
+        restart: always
+        ports: 
+            - "6379:6379"
     catalog.api:
         environment:
             - ASPNETCORE_ENVIRONMENT=Development
@@ -16,3 +21,13 @@ services:
             - catalogdb
         ports:
             - "8800:80"
+    basket.api:
+        environment:
+            - ASPNETCORE_ENVIRONMENT=Development
+            - "ConnectionStrings:Redis=basketdb:6379"
+        depends_on:
+            - basketdb
+        ports:
+            - "8801:80"
+
+
