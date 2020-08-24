@@ -7,6 +7,8 @@ using Basket.Api.Data;
 using Basket.Api.Data.Interfaces;
 using Basket.Api.Repositories;
 using Basket.Api.Repositories.Interfaces;
+using EventBusRabbitMQ;
+using EventBusRabbitMQ.Producer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
@@ -15,6 +17,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.OpenApi.Models;
+using RabbitMQ.Client;
 using StackExchange.Redis;
 
 namespace Basket.Api
@@ -55,6 +58,32 @@ namespace Basket.Api
             });
 
             #endregion
+
+            #region RabbitMQ Dependencies
+
+            services.AddSingleton<IRabbitMQConnection>(sp =>
+            {
+                var factory = new ConnectionFactory()
+                {
+                    HostName = Configuration["EventBus:HostName"]
+                };
+
+                if (!string.IsNullOrEmpty(Configuration["EventBus:UserName"]))
+                {
+                    factory.UserName = Configuration["EventBus:UserName"];
+                }
+
+                if (!string.IsNullOrEmpty(Configuration["EventBus:Password"]))
+                {
+                    factory.Password = Configuration["EventBus:Password"];
+                }
+
+                return new RabbitMQConnection(factory);
+            });
+
+            services.AddSingleton<EventBusRabbitMQProducer>();
+
+            #endregion           
             services.AddControllers();
         }
 

@@ -6,6 +6,9 @@ using System.Threading.Tasks;
 using AutoMapper;
 using Basket.Api.Repositories.Interfaces;
 using Basket.API.Entities;
+using EventBusRabbitMQ.Common;
+using EventBusRabbitMQ.Events;
+using EventBusRabbitMQ.Producer;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
@@ -17,14 +20,14 @@ namespace Basket.Api.Controllers
     public class BasketController : ControllerBase
     {
         private readonly IBasketRepository _repository;
-        //private readonly EventBusRabbitMQProducer _eventBus;
+        private readonly EventBusRabbitMQProducer _eventBus;
         private readonly ILogger<BasketController> _logger;
         private readonly IMapper _mapper;
 
-        public BasketController(IBasketRepository repository, IMapper mapper, ILogger<BasketController> logger)
+        public BasketController(IBasketRepository repository, EventBusRabbitMQProducer eventBus, IMapper mapper, ILogger<BasketController> logger)
         {
             _repository = repository ?? throw new ArgumentNullException(nameof(repository));
-           // _eventBus = eventBus ?? throw new ArgumentNullException(nameof(eventBus));
+           _eventBus = eventBus ?? throw new ArgumentNullException(nameof(eventBus));
             _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
@@ -79,17 +82,17 @@ namespace Basket.Api.Controllers
             // ordering.api to convert basket to order and proceeds with
             // order creation process
 
-            //var eventMessage = _mapper.Map<BasketCheckoutEvent>(basketCheckout);
-            //eventMessage.RequestId = Guid.NewGuid();
-            //eventMessage.TotalPrice = basket.TotalPrice;
+            var eventMessage = _mapper.Map<BasketCheckoutEvent>(basketCheckout);
+            eventMessage.RequestId = Guid.NewGuid();
+            eventMessage.TotalPrice = basket.TotalPrice;
 
             try
             {
-                //_eventBus.PublishBasketCheckout(EventBusConstants.BasketCheckoutQueue, eventMessage);
+                _eventBus.PublishBasketCheckout(EventBusConstants.BasketCheckoutQueue, eventMessage);
             }
             catch (Exception ex)
             {
-               // _logger.LogError(ex, "ERROR Publishing integration event: {EventId} from {AppName}", eventMessage.RequestId, "Basket");
+               _logger.LogError(ex, "ERROR Publishing integration event: {EventId} from {AppName}", eventMessage.RequestId, "Basket");
                 throw;
             }
 
