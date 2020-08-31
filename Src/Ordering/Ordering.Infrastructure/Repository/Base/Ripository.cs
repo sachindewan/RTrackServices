@@ -80,13 +80,8 @@ namespace Ordering.Infrastructure.Repository.Base
 
         public async Task UpdateAsync(T entity)
         {
-            var data = _dbContext.Set<T>().FirstOrDefault(X => X.Id == entity.Id);
-            if (data != null)
-            {
-                data = entity;
-                await _dbContext.SaveChangesAsync();
-            }
-
+            _dbContext.Update<T>(entity);
+            await _dbContext.SaveChangesAsync();
         }
     }
 }
