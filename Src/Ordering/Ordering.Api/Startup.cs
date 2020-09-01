@@ -21,6 +21,10 @@ using Ordering.Infrastructure.Data;
 using Ordering.Infrastructure.Repository;
 using Ordering.Infrastructure.Repository.Base;
 using Microsoft.OpenApi.Models;
+using EventBusRabbitMQ;
+using RabbitMQ.Client;
+using Ordering.Api.RabbitMQ;
+using Ordering.Api.Extentions;
 
 namespace Ordering.Api
 {
@@ -45,7 +49,7 @@ namespace Ordering.Api
 
             // use real database
             services.AddDbContext<OrderContext>(c =>
-                c.UseSqlServer(Configuration.GetConnectionString("OrderConnection")), ServiceLifetime.Scoped); // we made singleton this in order to resolve in mediatR when consuming Rabbit
+                c.UseSqlServer(Configuration.GetConnectionString("OrderConnection")), ServiceLifetime.Singleton); // we made singleton this in order to resolve in mediatR when consuming Rabbit
 
             #endregion
             #region Project Dependencies
@@ -68,6 +72,30 @@ namespace Ordering.Api
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "Order API", Version = "v1" });
             });
 
+            #endregion
+            #region RabbitMQ Dependencies
+
+            services.AddSingleton<IRabbitMQConnection>(sp =>
+            {
+                var factory = new ConnectionFactory()
+                {
+                    HostName = Configuration["EventBus:HostName"]
+                };
+
+                if (!string.IsNullOrEmpty(Configuration["EventBus:UserName"]))
+                {
+                    factory.UserName = Configuration["EventBus:UserName"];
+                }
+
+                if (!string.IsNullOrEmpty(Configuration["EventBus:Password"]))
+                {
+                    factory.Password = Configuration["EventBus:Password"];
+                }
+
+                return new RabbitMQConnection(factory);
+            });
+
+            services.AddSingleton<EventBusRabbitMQConsumer>();
             #endregion
         }
 
@@ -92,6 +120,7 @@ namespace Ordering.Api
             {
                 endpoints.MapControllers();
             });
+            app.UseRabbitListener();
         }
     }
 }
