@@ -49,7 +49,7 @@ namespace Ordering.Api
 
             // use real database
             services.AddDbContext<OrderContext>(c =>
-                c.UseSqlServer(Configuration.GetConnectionString("OrderConnection")), ServiceLifetime.Singleton); // we made singleton this in order to resolve in mediatR when consuming Rabbit
+                c.UseSqlServer(Configuration.GetConnectionString("OrderConnection"))); // we made singleton this in order to resolve in mediatR when consuming Rabbit
 
             #endregion
             #region Project Dependencies
@@ -95,12 +95,12 @@ namespace Ordering.Api
                 return new RabbitMQConnection(factory);
             });
 
-            services.AddSingleton<EventBusRabbitMQConsumer>();
+            services.AddScoped<EventBusRabbitMQConsumer>();
             #endregion
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env,IServiceProvider serviceProvider)
         {
             if (env.IsDevelopment())
             {
@@ -120,7 +120,7 @@ namespace Ordering.Api
             {
                 endpoints.MapControllers();
             });
-            app.UseRabbitListener();
+            app.UseRabbitListener(serviceProvider);
         }
     }
 }
